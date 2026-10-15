@@ -1,0 +1,34 @@
+{
+  "name": "dsh-voice-personal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "本地个人化语音识别增强：个人词库纠错 + 中英混说 + 声纹认人 + 表达习惯",
+  "exports": {
+    ".": "./index.js",
+    "./correct": "./lib/correct/index.js",
+    "./voiceprint": "./lib/voiceprint/index.js",
+    "./style": "./lib/style/index.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "meta": {
+    "title": "个人语音识别",
+    "description": "用你自己的词库、声纹和表达习惯纠正听写结果"
+  },
+  "icon": "./icon.svg",
+  "files": [
+    "index.js",
+    "lib/",
+    "models/",
+    "scripts/",
+    "locale/*.json",
+    "icon.svg",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

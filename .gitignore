@@ -1,0 +1,10 @@
+node_modules/
+*.log
+*.pid
+.DS_Store
+# 声纹与画像属于用户私有数据，绝不入库
+voiceprints.json
+style.json
+glossary.json
+# 模型走 Git LFS 或发布页附件
+models/*.onnx

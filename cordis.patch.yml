@@ -1,0 +1,35 @@
+# Personal speech recognition bundle.
+#
+# Inserts one Host plugin. It depends on the voice-input bundle already selected in
+# the desktop profile, which provides the `speechToText` service this plugin injects.
+#
+# The wrapped provider is chosen at runtime, so this row works whether the shipped
+# provider id changes or the user reorders bundles.
+- insert:
+    - id: voice-personal
+      name: 'dsh-voice-personal'
+      config:
+        providerId: personal-local
+        providerName: 个人语音（本地增强）
+        # Empty means: prefer the shipped local provider, then the service default.
+        baseProviderId: ''
+        # Empty means: <DSH_HOME>/voice-personal
+        dataDir: ''
+        # Empty means: the model shipped beside this plugin.
+        speakerModelPath: ''
+        voiceprintThreshold: 0.62
+        # Off. The goal is higher transcription accuracy, not speaker gating; a fail-closed
+        # gate here only blocks dictation when the voiceprint is missing or stale.
+        requireEnrolledSpeaker: false
+        # Cross-script transliteration (哈里斯 -> Harness). Same-script Chinese homophone
+        # rewriting was removed as unsound: see lib/correct/glossary.js.
+        crossScript: true
+        # Fuzzy Latin matching. Off by default — it is the only pass able to rewrite a
+        # word the glossary never listed, and a 210k-word dictionary scan showed it
+        # corrupting real words. Exact matching already covers the observed errors.
+        fuzzyTerms: false
+        canonicalTerms: true
+        spacing: space
+        applyStyleProfile: true
+        # On to receive a per-transcript `changes` audit list.
+        audit: false
