@@ -1,13 +1,12 @@
-# Adversarial audit — nine defect classes, how they were found, and what fixed them
+# 对抗审计 —— 九类缺陷：怎么发现的，怎么修的
 
-An independent adversarial pass was run against the correction engine with a single
-mandate: **break the property "never corrupt already-correct text"**. It succeeded nine
-ways. This document records each defect with its reproducer, because the fixes are only
-credible if the failures are public.
+**中文** | [English](ADVERSARIAL.en.md)
+
+针对纠错引擎跑了一次独立的对抗审计，只有一条任务：**破坏「绝不破坏已经正确的文本」这条性质**。它成功了九次。本文逐条记录缺陷和复现器——失败不公开，修复就不可信。
 
 The project's own suite passed 59/59 at the time. None of the nine were covered.
 
-## D1 — Homophone pass rewrote ordinary Chinese (critical)
+## D1 —— 同音 pass 改写了正常中文（严重）
 
 Toneless-pinyin matching over 2-syllable CJK spans matched every homophone of every
 glossary pair.
@@ -23,17 +22,13 @@ glossary pair.
 一步一步来       → 异步异步来         (yībù, twice)
 ```
 
-Blast radius, computed by enumerating the collision space: **160,454 distinct 2-character
-CJK strings** were rewritten across the 12 two-syllable pairs.
+碰撞面（枚举碰撞空间算得）：12 组两音节词条共 **160,454 个不同的两字 CJK 组合**被改写。
 
-**Fix:** the same-script homophone pass was deleted outright. Cross-script
-transliteration (Chinese mis-hearing of a Latin term) remains, with the three guards in
-[DESIGN.md](DESIGN.md) §2. `PAIRS` ships empty.
+**修复：** 同音 pass 整体删除。保留跨语种音译（中文误听拉丁术语），带 [DESIGN.md](DESIGN.md) §2 的三条守护。`PAIRS` 默认为空。
 
-## D2 — Exact `heard` variants corrupted correct English
+## D2 —— `heard` 变体改写了正确英文
 
-The glossary listed real words as mis-hearings: `grade` under Gradle, `harris` under
-Harness, `cloud` under Claude.
+词库把真实单词列为误听：`grade` 挂在 Gradle 下、`harris` 挂在 Harness 下、`cloud` 挂在 Claude 下。
 
 ```
 my grade is A                 → my Gradle is A
@@ -42,26 +37,21 @@ harris county                 → Harness county
 upgrade to the new version    → Gradle to the new version
 ```
 
-**Fix:** a heard form that is itself an ordinary word must not be listed. Shipped glossary
-entries are product spellings (`flcash`, `workbody`) or casing normalisations only.
+**修复：** 本身是正常词的形式不能进 `heard` 清单。词库词条只放产品拼写（`flcash`、`workbody`）或大小写归一。
 
-## D3 — Fuzzy Latin matching corrupted 97 dictionary words
+## D3 —— 模糊拉丁匹配损坏了 97 个词典词
 
 Scanning 210,604 dictionary words found 97 rewritten with a changed content fingerprint:
 `sadness` → `Harness` (60 words hit Harness alone), `cocoa` → `Cocos Creator`, `hub` →
 `GitHub`.
 
-Root causes: (a) mis-spellings were indexed as fuzzy *references*, acting as extra
-attractors; (b) the runner-up margin compared against 0 when only one reference scored, so
-any single weak match passed unconditionally.
+根因：(a) 误听拼写被当作模糊*参照*建索引，成为额外的吸引子；(b) 只有一个参照得分时，第二名的 margin 是和 0 比，任何单个弱匹配都无条件通过。
 
-**Fix:** fuzzy references are canonical forms only; the margin requires an actual
-runner-up; fuzzy is opt-in and off by default. Post-fix dictionary scan: **0 / 198,631**
-words corrupted, with fuzzy on and off.
+**修复：** 模糊参照只放规范形式；margin 要求真实存在第二名；模糊匹配改为可选且默认关。修复后词典扫描：开与关都是 **0 / 198,631** 个词被损坏。
 
-## D4 — File extensions swallowed
+## D4 —— 文件扩展名被吞
 
-`LATIN_RUN` treated `.` as part of a token, so `harness.git` was one token:
+`LATIN_RUN` 把 `.` 当作 token 的一部分，所以 `harness.git` 是一个 token：
 
 ```
 harness.git              → Harness
@@ -69,10 +59,9 @@ cd ~/projects/harness.git → cd ~/projects/Harness
 grade.js                 → Gradle
 ```
 
-**Fix:** protected-span masking before all passes (URLs, paths, emails, versions, CLI
-flags, inline code, known extensions). One mechanism covers every pass.
+**修复：** 所有 pass 之前先做保护跨度遮罩（URL、路径、邮箱、版本号、CLI 参数、行内代码、已知扩展名）。一个机制覆盖所有 pass。
 
-## D5 — Non-idempotent, unbounded growth
+## D5 —— 非幂等，无界增长
 
 The phrase pass emitted `Cocos Creator`; the single-token pass then expanded the `Cocos`
 inside its own output:
@@ -83,33 +72,27 @@ cocos creator → Cocos Creator Creator → Cocos Creator Creator Creator → �
 
 Structured fuzzing (4,000 mixed-atom strings) found **705** non-idempotent cases.
 
-**Fix:** never re-expand a canonical form; never list a canonical's prefix as a
-mis-hearing. Post-fix fuzz: 0 / 4,000.
+**修复：** 规范形式永不二次展开；规范形式的自身前缀不进误听清单。修复后 fuzz：0 / 4,000。
 
-## D6 — Table-missing characters collapsed spans
+## D6 —— 表缺字导致跨度坍缩
 
-873 CJK characters have no pinyin entry (mostly Extension A). `toPinyinArray` skipped them
-silently, so a 4-character span could produce a 3-syllable key:
+873 个 CJK 字符没有拼音条目（大部分在扩展 A 区）。`toPinyinArray` 静默跳过它们，4 字跨度能产出 3 音节键：
 
 ```
 克㐂劳德 → Claude      哈㐂里斯 → Harness      普㐂朗普特 → prompt
 ```
 
-**Fix:** a span qualifies only when every character has a reading (`readings.length ===
-span.length`).
+**修复：** 只有整段每个字都有读音时才允许匹配（`readings.length === span.length`）。
 
-## D7 — Guard seam: characters vs syllables
+## D7 —— 守护缝隙：字数 vs 音节数
 
-The new ≥3-character guard counted characters while the index key counted syllables. A
-3-character `heard` containing a table-missing character passed the guard yet indexed a
-2-syllable key, re-arming D1 for `哈里` → `Harness`.
+新的 ≥3 字守护数的是字符，索引键数的是音节。含表缺字的 3 字 `heard` 通过了守护，却索引出 2 音节键——等于把 D1 对 `哈里` → `Harness` 重新上了膛。
 
-**Fix:** the completeness guard (D6) makes character count and syllable count agree, which
-closes the seam structurally rather than adding a second count.
+**修复：** D6 的完整性守护让字数与音节数一致，从结构上封死这条缝，而不是再加一个计数。
 
-## D8 — `tidy()` destroyed indentation
+## D8 —— `tidy()` 破坏缩进
 
-Collapsing runs of 2+ spaces included line-leading whitespace:
+折叠 2 个以上连续空格时把行首空白也包含了：
 
 ```
 def foo():          →      def foo():
@@ -117,36 +100,28 @@ def foo():          →      def foo():
         return 1    →        return 1
 ```
 
-**Fix:** preserve leading whitespace per line verbatim; collapse internal runs only.
-Suite asserts Python and YAML blocks survive byte-identical.
+**修复：** 逐行原样保留行首空白，只折叠内部连续段。测试断言 Python 和 YAML 块逐字节不变。
 
-## D9 — Traditional Chinese silently converted
+## D9 —— 繁体被静默转换
 
-Matching was by pinyin, so `工作臺` matched the key for `工作台` and was rewritten to
-simplified. Silent script conversion is a content change the user did not ask for.
+匹配走拼音，所以 `工作臺` 命中了 `工作台` 的键被改写成简体。静默的文字体系转换是用户没有要求的语义变更。
 
-**Fix:** gone with the same-script pass (D1). Traditional text now survives untouched, and
-the suite asserts it.
+**修复：** 随 D1 的同音 pass 一起移除。繁体现在原样保留，测试断言了这一点。
 
-## What the audit confirmed as sound
+## 审计确认为可靠的部分
 
-Bounded negative results, recorded so the claim has edges:
+有边界的阴性结果，记录下来让「可靠」这个词有具体范围：
 
-- **Pinyin table readings:** all 26,711 entries audited against pypinyin 0.55.0 — zero
-  genuinely wrong readings after allowing the systematic u/ü merge. Polyphones spot-checked
-  (行→xing, 长→zhang, 重→zhong, 率→lu, 薄→bao, 削→xue).
-- **Spacing on paths/URLs/code:** `~/Downloads/…`, `https://…`, `127.0.0.1:19387`, `C++`,
-  `v1.2`, `user@example.com` — untouched.
-- **Greedy longest-match:** no case found where a longer span beat a better shorter one.
-- **Unicode edges:** emoji, ZWJ families, combining marks, surrogate pairs, 60,000-char
-  inputs — no corruption, no pathological timing.
+- **拼音表读音：** 全部 26,711 条与 pypinyin 0.55.0 对照——允许系统性的 u/ü 合并后，真正错误的读音为零。多音字抽查（行→xing、长→zhang、重→zhong、率→lu、薄→bao、削→xue）。
+- **路径/URL/代码上的空格：** `~/Downloads/…`、`https://…`、`127.0.0.1:19387`、`C++`、`v1.2`、`user@example.com` —— 全部未被改动。
+- **贪心最长匹配：** 没有发现更长跨度击败更优短跨度的案例。
+- **Unicode 边界：** emoji、ZWJ 家族、组合记号、代理对、6 万字输入——无损坏、无病态耗时。
 
-## Method notes
+## 方法说明
 
 - The audit pinned a frozen snapshot of the module before reporting, then re-confirmed
   every reproducer against the live module — the target was being edited mid-verification.
 - Two of the auditor's own initial claims were wrong (`率=lu` judged a bad reading; the
   guard judged comment-only) and were retracted after re-reading source. A verifier that
   hides its own errors is worthless.
-- All reproducers live on as sections 三–九 of `test/correct.test.mjs`, so each fix is
-  executable proof rather than a claim.
+- 所有复现器保留在 `test/correct.test.mjs` 的第三至九节，每个修复都是可执行的证据，不是口头声明。

@@ -13,8 +13,8 @@
     "./locale/*.json": "./locale/*.json"
   },
   "meta": {
-    "title": "个人语音识别",
-    "description": "用你自己的词库、声纹和表达习惯纠正听写结果"
+    "title": "个人语音识别 / Personal Speech",
+    "description": "用你自己的词库与表达习惯纠正听写 · Correct dictation with your own glossary, transliteration and style profile"
   },
   "icon": "./icon.svg",
   "files": [
