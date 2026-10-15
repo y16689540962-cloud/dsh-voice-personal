@@ -68,7 +68,7 @@ gHub → GitHub         toptop → TapTap           deep seek → DeepSeek
 
 ```bash
 DSH="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh"
-"$DSH" plugin --profile desktop add dsh-voice-personal
+"$DSH" plugin --profile desktop add dsh-voice-personal@0.1.0
 ```
 
 **方式 B · 从源码**
