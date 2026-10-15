@@ -64,15 +64,24 @@ gHub → GitHub         toptop → TapTap           deep seek → DeepSeek
 
 需要已安装并能运行的 DeepSeek Harness 桌面版。
 
+**方式 A · npm（推荐）**
+
+```bash
+DSH="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh"
+"$DSH" plugin --profile desktop add dsh-voice-personal
+```
+
+**方式 B · 从源码**
+
 ```bash
 git clone https://github.com/y16689540962-cloud/dsh-voice-personal.git
 cd dsh-voice-personal
-
-DSH="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh"
 "$DSH" plugin --profile desktop add "file:$PWD"
 ```
 
 重启 Harness。卸载是 `plugin remove dsh-voice-personal`——被包装的 provider 保留自己的 id，其他什么都不动。
+
+> 声纹模型（`campplus.onnx`，28 MB）不打进 npm 包。npm 安装后如果要用声纹功能，从 [Release v0.1.0](https://github.com/y16689540962-cloud/dsh-voice-personal/releases/tag/v0.1.0) 下载放进 `models/`（SHA-256 见 `models/SOURCES.md`）。不用声纹功能则不需要它。
 
 从你的会话历史构建自己的词库：
 

@@ -64,15 +64,24 @@ gHub → GitHub         toptop → TapTap           deep seek → DeepSeek
 
 Requires a running DeepSeek Harness desktop install.
 
+**Option A · npm (recommended)**
+
+```bash
+DSH="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh"
+"$DSH" plugin --profile desktop add dsh-voice-personal
+```
+
+**Option B · from source**
+
 ```bash
 git clone https://github.com/y16689540962-cloud/dsh-voice-personal.git
 cd dsh-voice-personal
-
-DSH="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh"
 "$DSH" plugin --profile desktop add "file:$PWD"
 ```
 
 Restart the harness. Rollback is `plugin remove dsh-voice-personal` — the wrapped provider keeps its own id, so nothing else moves.
+
+> The speaker model (`campplus.onnx`, 28 MB) is not bundled in the npm package. If you want speaker verification after an npm install, fetch it from [Release v0.1.0](https://github.com/y16689540962-cloud/dsh-voice-personal/releases/tag/v0.1.0) into `models/` (SHA-256 in `models/SOURCES.md`). You do not need it for the correction pipeline.
 
 To build your own glossary from your session history:
 

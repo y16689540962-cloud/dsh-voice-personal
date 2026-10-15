@@ -1,9 +1,8 @@
 {
   "name": "dsh-voice-personal",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
-  "description": "本地个人化语音识别增强：个人词库纠错 + 中英混说 + 声纹认人 + 表达习惯",
+  "description": "Local ASR post-processing for DeepSeek Harness: personal glossary, cross-script transliteration, learned style profile. Wraps the built-in SenseVoice provider.",
   "exports": {
     ".": "./index.js",
     "./correct": "./lib/correct/index.js",
@@ -20,15 +19,43 @@
   "files": [
     "index.js",
     "lib/",
-    "models/",
     "scripts/",
     "locale/*.json",
     "icon.svg",
-    "cordis.patch.yml"
+    "cordis.patch.yml",
+    "docs/",
+    "LICENSE",
+    "README.md"
   ],
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "speech-to-text",
+    "asr",
+    "voice-input",
+    "chinese",
+    "dictation",
+    "plugin",
+    "cordis"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/y16689540962-cloud/dsh-voice-personal#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/y16689540962-cloud/dsh-voice-personal.git"
+  },
+  "bugs": {
+    "url": "https://github.com/y16689540962-cloud/dsh-voice-personal/issues"
+  },
+  "author": {
+    "name": "y16689540962-cloud"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
