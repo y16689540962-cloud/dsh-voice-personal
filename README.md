@@ -90,7 +90,7 @@ $ node scripts/terms.mjs add Claude --heard cloud
 
 ```bash
 DSH="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh"
-"$DSH" plugin --profile desktop add dsh-voice-personal@0.1.1
+"$DSH" plugin --profile desktop add dsh-voice-personal@0.1.2
 ```
 
 **方式 B · 从源码**

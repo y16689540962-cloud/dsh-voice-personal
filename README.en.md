@@ -90,7 +90,7 @@ Requires a running DeepSeek Harness desktop install.
 
 ```bash
 DSH="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh"
-"$DSH" plugin --profile desktop add dsh-voice-personal@0.1.1
+"$DSH" plugin --profile desktop add dsh-voice-personal@0.1.2
 ```
 
 **Option B · from source**

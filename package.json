@@ -1,6 +1,6 @@
 {
   "name": "dsh-voice-personal",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "Local ASR post-processing for DeepSeek Harness: personal glossary, cross-script transliteration, learned style profile. Wraps the built-in SenseVoice provider.",
   "exports": {
