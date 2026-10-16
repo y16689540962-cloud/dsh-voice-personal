@@ -90,7 +90,7 @@ $ node scripts/terms.mjs add Claude --heard cloud
 
 ```bash
 DSH="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh"
-"$DSH" plugin --profile desktop add dsh-voice-personal@0.1.0
+"$DSH" plugin --profile desktop add dsh-voice-personal@0.1.1
 ```
 
 **方式 B · 从源码**
@@ -103,7 +103,7 @@ cd dsh-voice-personal
 
 重启 Harness。卸载是 `plugin remove dsh-voice-personal`——被包装的 provider 保留自己的 id，其他什么都不动。
 
-> 声纹模型（`campplus.onnx`，28 MB）不打进 npm 包。npm 安装后如果要用声纹功能，从 [Release v0.1.0](https://github.com/y16689540962-cloud/dsh-voice-personal/releases/tag/v0.1.0) 下载放进 `models/`（SHA-256 见 `models/SOURCES.md`）。不用声纹功能则不需要它。
+> 声纹模型（`campplus.onnx`，28 MB）不打进 npm 包。npm 安装后如果要用声纹功能，从 [Release v0.1.0](https://github.com/y16689540962-cloud/dsh-voice-personal/releases/tag/v0.1.0) 下载放进 `models/`（SHA-256 见 `models/SOURCES.md`）。**模型附件一直挂在 v0.1.0 那个 Release 上**——它跨版本没变过，不用去别的版本找。不用声纹功能则不需要它。
 
 从你的会话历史构建自己的词库：
 

@@ -90,7 +90,7 @@ Requires a running DeepSeek Harness desktop install.
 
 ```bash
 DSH="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh"
-"$DSH" plugin --profile desktop add dsh-voice-personal@0.1.0
+"$DSH" plugin --profile desktop add dsh-voice-personal@0.1.1
 ```
 
 **Option B · from source**
@@ -103,7 +103,7 @@ cd dsh-voice-personal
 
 Restart the harness. Rollback is `plugin remove dsh-voice-personal` — the wrapped provider keeps its own id, so nothing else moves.
 
-> The speaker model (`campplus.onnx`, 28 MB) is not bundled in the npm package. If you want speaker verification after an npm install, fetch it from [Release v0.1.0](https://github.com/y16689540962-cloud/dsh-voice-personal/releases/tag/v0.1.0) into `models/` (SHA-256 in `models/SOURCES.md`). You do not need it for the correction pipeline.
+> The speaker model (`campplus.onnx`, 28 MB) is not bundled in the npm package. If you want speaker verification after an npm install, fetch it from [Release v0.1.0](https://github.com/y16689540962-cloud/dsh-voice-personal/releases/tag/v0.1.0) into `models/` (SHA-256 in `models/SOURCES.md`). **The model asset is attached to the v0.1.0 release** and has not changed between versions — do not go looking for it under a later tag. You do not need it for the correction pipeline.
 
 To build your own glossary from your session history:
 
