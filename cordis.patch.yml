@@ -15,6 +15,11 @@
         baseProviderId: ''
         # Empty means: <DSH_HOME>/voice-personal
         dataDir: ''
+        # Your own glossary, as a JSON file. Empty means <dataDir>/terms.json, which the
+        # plugin re-reads whenever it changes — adding a word needs no restart. Kept out of
+        # the package on purpose: a `pnpm file:` install is hard-linked, so source edits do
+        # not reach the copy DSH loads.
+        userTermsFile: ''
         # Empty means: the model shipped beside this plugin.
         speakerModelPath: ''
         voiceprintThreshold: 0.62
@@ -24,10 +29,9 @@
         # Cross-script transliteration (哈里斯 -> Harness). Same-script Chinese homophone
         # rewriting was removed as unsound: see lib/correct/glossary.js.
         crossScript: true
-        # Fuzzy Latin matching. Off by default — it is the only pass able to rewrite a
-        # word the glossary never listed, and a 210k-word dictionary scan showed it
-        # corrupting real words. Exact matching already covers the observed errors.
-        fuzzyTerms: false
+        # There is no fuzzyTerms option. One shipped; an audit measured it inert (6,748
+        # single-edit variants, zero extra corrections) and it was removed rather than left
+        # as a switch that does nothing. See lib/correct/index.js `fixLatin`.
         canonicalTerms: true
         spacing: space
         applyStyleProfile: true

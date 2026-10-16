@@ -1,6 +1,6 @@
 {
   "name": "dsh-voice-personal",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Local ASR post-processing for DeepSeek Harness: personal glossary, cross-script transliteration, learned style profile. Wraps the built-in SenseVoice provider.",
   "exports": {
@@ -16,16 +16,25 @@
     "description": "用你自己的词库与表达习惯纠正听写 · Correct dictation with your own glossary, transliteration and style profile"
   },
   "icon": "./icon.svg",
+  "scripts": {
+    "test": "node test/correct.test.mjs && node --test test/user-terms.test.mjs && node --test test/audit2-regressions.test.mjs && node lib/style/self-test.js && node lib/voiceprint/selftest.mjs",
+    "eval": "node test/eval.mjs",
+    "audit": "node skills/asr-text-correction-safety/scripts/audit.mjs all lib/correct/index.js"
+  },
   "files": [
     "index.js",
     "lib/",
     "scripts/",
+    "test/",
     "locale/*.json",
     "icon.svg",
     "cordis.patch.yml",
     "docs/",
     "LICENSE",
-    "README.md"
+    "LICENSE-APACHE-2.0.txt",
+    "THIRD-PARTY-NOTICES.md",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "dsh": {
     "bundle": {

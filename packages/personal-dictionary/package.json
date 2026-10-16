@@ -1,0 +1,54 @@
+{
+  "name": "asr-personal-dictionary",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Apply your own vocabulary to speech-recognition output: product names, project names, casing, and Chinese mis-hearings of Latin terms. Zero dependencies, offline, exact-match only.",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "dist/",
+    "examples/",
+    "README.md",
+    "README.en.md",
+    "THIRD-PARTY-NOTICES.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "prepare": "node scripts/build.mjs --quiet",
+    "prepack": "node scripts/build.mjs",
+    "test": "node scripts/build.mjs --quiet && node --test test/dictionary.test.mjs"
+  },
+  "keywords": [
+    "asr",
+    "speech-to-text",
+    "dictation",
+    "personal-dictionary",
+    "custom-vocabulary",
+    "glossary",
+    "post-processing",
+    "chinese",
+    "code-switching",
+    "voice-input"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/y16689540962-cloud/dsh-voice-personal/tree/main/packages/personal-dictionary#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/y16689540962-cloud/dsh-voice-personal.git",
+    "directory": "packages/personal-dictionary"
+  },
+  "bugs": {
+    "url": "https://github.com/y16689540962-cloud/dsh-voice-personal/issues"
+  },
+  "author": {
+    "name": "y16689540962-cloud"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,4 @@
+# dist/ 由 scripts/build.mjs 从仓库根的 lib/correct/ 生成，不入库
+dist/
+node_modules/
+.eval/

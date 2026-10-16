@@ -1,0 +1,510 @@
+{
+  "version": 1,
+  "frozenAt": "2026-10-16",
+  "note": "冻结回归语料。三条纪律：(1) 本文件一经入库就不再随 glossary 改动而改变——否则前后两次跑的不是同一批样本，A/B 无意义；(2) expect 是照「应该怎样」手写的，不是照当前实现的输出快照，所以跑出来的 failure 是有价值的发现；(3) keep:true 表示「一个字节都不能变」，这类失败是最严重的一档。",
+  "strata": {
+    "fix-casing": "术语大小写归一",
+    "fix-misspelling": "真实误听拼写",
+    "fix-phrase": "多词术语 / 空格形误听",
+    "fix-crossscript": "中文误听拉丁术语（跨语种音译）",
+    "fix-in-sentence": "中英混说整句，多处同时纠正",
+    "guard-homophone": "D1/D7/D9：同音陷阱，绝不能改",
+    "guard-realword": "D2/D3：本身是正常英文词，绝不能改",
+    "guard-protected": "D4：URL / 路径 / 版本 / 参数 / 代码，必须整段遮罩",
+    "guard-whitespace": "D8：缩进与换行必须逐字节保留",
+    "guard-canonical": "D5：规范形式不得二次展开（幂等）",
+    "edge": "退化输入"
+  },
+  "cases": [
+    {
+      "id": "casing-dsh",
+      "stratum": "fix-casing",
+      "input": "dsh 的识别有点问题",
+      "expect": "DSH 的识别有点问题",
+      "why": "词库 evidence 原句"
+    },
+    {
+      "id": "casing-vpn",
+      "stratum": "fix-casing",
+      "input": "帮我稳定我现在使用的 vpn",
+      "expect": "帮我稳定我现在使用的 VPN",
+      "why": "词库 evidence 原句"
+    },
+    {
+      "id": "casing-apk",
+      "stratum": "fix-casing",
+      "input": "打包成apk",
+      "expect": "打包成 APK",
+      "why": "无空格起手，顺带验证 CJK/Latin 间距"
+    },
+    {
+      "id": "casing-gradle",
+      "stratum": "fix-casing",
+      "input": "跑一下gradle",
+      "expect": "跑一下 Gradle",
+      "why": "heard 为空，只做大小写归一"
+    },
+    {
+      "id": "casing-android",
+      "stratum": "fix-casing",
+      "input": "在android上测试",
+      "expect": "在 Android 上测试",
+      "why": "词库 evidence 原句"
+    },
+    {
+      "id": "casing-issue",
+      "stratum": "fix-casing",
+      "input": "issue create 一下",
+      "expect": "Issue create 一下",
+      "why": "词库 evidence 原句"
+    },
+    {
+      "id": "casing-token-already-lower",
+      "stratum": "fix-casing",
+      "input": "token 不够用了",
+      "expect": "token 不够用了",
+      "why": "规范形式本身就是小写，不得改动"
+    },
+    {
+      "id": "miss-flcash",
+      "stratum": "fix-misspelling",
+      "input": "帮我稳定我现在的flcash",
+      "expect": "帮我稳定我现在的 FlClash",
+      "why": "词库 evidence 原句"
+    },
+    {
+      "id": "miss-workbody",
+      "stratum": "fix-misspelling",
+      "input": "了解一下workbody好几个账号",
+      "expect": "了解一下 WorkBuddy 好几个账号",
+      "why": "词库 evidence 原句"
+    },
+    {
+      "id": "miss-gihub",
+      "stratum": "fix-misspelling",
+      "input": "你给我上gihub搜一下",
+      "expect": "你给我上 GitHub 搜一下",
+      "why": "heard 含 gihub"
+    },
+    {
+      "id": "miss-gHub",
+      "stratum": "fix-misspelling",
+      "input": "你给我上gHub搜一下",
+      "expect": "你给我上 GitHub 搜一下",
+      "why": "词库 evidence 里出现的真实形态；heard 未收录 gHub"
+    },
+    {
+      "id": "miss-toptop",
+      "stratum": "fix-misspelling",
+      "input": "发布到toptop是不是要屏蔽掉",
+      "expect": "发布到 TapTap 是不是要屏蔽掉",
+      "why": "heard 含 toptop"
+    },
+    {
+      "id": "miss-obsidian",
+      "stratum": "fix-misspelling",
+      "input": "这个接入我的obsidian",
+      "expect": "这个接入我的 Obsidian",
+      "why": "词库 evidence 原句"
+    },
+    {
+      "id": "miss-claude-codex",
+      "stratum": "fix-misspelling",
+      "input": "claude_local 和 codex_local",
+      "why": "词库 evidence 原句。下划线标识符必须整体保留：审计 A4 实测 `agent_id`→`Agent_id`，把能用的标识符改坏。原期望值 `Claude_local 和 Codex_local` 是照证据手写时想漏了这一点。",
+      "keep": true
+    },
+    {
+      "id": "phrase-cocos-glued",
+      "stratum": "fix-phrase",
+      "input": "用CocosCreator做游戏",
+      "expect": "用 Cocos Creator 做游戏",
+      "why": "粘连形误听"
+    },
+    {
+      "id": "phrase-cocos-lower",
+      "stratum": "fix-phrase",
+      "input": "cocos creator 项目",
+      "expect": "Cocos Creator 项目",
+      "why": "空格形+全小写；phrase pass 以折叠形式比较，可能被当成已规范"
+    },
+    {
+      "id": "phrase-deepseek",
+      "stratum": "fix-phrase",
+      "input": "反代到deep seek harness",
+      "expect": "反代到 DeepSeek Harness",
+      "why": "词库 evidence 原句；heard 只有粘连形 deepseek"
+    },
+    {
+      "id": "phrase-plantmerge",
+      "stratum": "fix-phrase",
+      "input": "新项目叫plantmerge",
+      "expect": "新项目叫 PlantMerge",
+      "why": "词库 evidence 原句"
+    },
+    {
+      "id": "xs-halisi",
+      "stratum": "fix-crossscript",
+      "input": "这应该是哈里斯的工作吗",
+      "expect": "这应该是 Harness 的工作吗",
+      "why": "词库 evidence 原句"
+    },
+    {
+      "id": "xs-haneisi",
+      "stratum": "fix-crossscript",
+      "input": "这应该是哈内斯的工作吗",
+      "expect": "这应该是 Harness 的工作吗",
+      "why": "heard 第二个变体"
+    },
+    {
+      "id": "xs-dipuxike",
+      "stratum": "fix-crossscript",
+      "input": "迪普西克怎么样",
+      "expect": "DeepSeek 怎么样",
+      "why": "中文音译"
+    },
+    {
+      "id": "sent-github-apk",
+      "stratum": "fix-in-sentence",
+      "input": "帮我把这个插件发到github上然后更新一下apk的版本",
+      "expect": "帮我把这个插件发到 GitHub 上然后更新一下 APK 的版本",
+      "why": "一句两处"
+    },
+    {
+      "id": "sent-cocos-taptap",
+      "stratum": "fix-in-sentence",
+      "input": "用cocoscreator做的那款游戏要发到taptap",
+      "expect": "用 Cocos Creator 做的那款游戏要发到 TapTap",
+      "why": "混合：粘连术语 + 空格插入"
+    },
+    {
+      "id": "guard-renwu",
+      "stratum": "guard-homophone",
+      "input": "人物关系很复杂",
+      "keep": true,
+      "why": "D1 rènwù；早期版本改成「任务关系很复杂」"
+    },
+    {
+      "id": "guard-yibu-film",
+      "stratum": "guard-homophone",
+      "input": "这是一部好电影",
+      "keep": true,
+      "why": "D1 yībù；早期版本改成「这是异步好电影」"
+    },
+    {
+      "id": "guard-xintiao",
+      "stratum": "guard-homophone",
+      "input": "信条很重要",
+      "keep": true,
+      "why": "D1 xìntiáo"
+    },
+    {
+      "id": "guard-bianyi-police",
+      "stratum": "guard-homophone",
+      "input": "便衣警察",
+      "keep": true,
+      "why": "D1 biànyī"
+    },
+    {
+      "id": "guard-jiedian",
+      "stratum": "guard-homophone",
+      "input": "接点电阻",
+      "keep": true,
+      "why": "D1 jiēdiǎn"
+    },
+    {
+      "id": "guard-peizhi",
+      "stratum": "guard-homophone",
+      "input": "配制溶液",
+      "keep": true,
+      "why": "D1 pèizhì"
+    },
+    {
+      "id": "guard-bianyi-virus",
+      "stratum": "guard-homophone",
+      "input": "变异病毒",
+      "keep": true,
+      "why": "D1 biànyì"
+    },
+    {
+      "id": "guard-yibu-twice",
+      "stratum": "guard-homophone",
+      "input": "一步一步来",
+      "keep": true,
+      "why": "D1 同音词出现两次"
+    },
+    {
+      "id": "guard-gongzuotai",
+      "stratum": "guard-homophone",
+      "input": "工作太累了",
+      "keep": true,
+      "why": "「工作太」不是「工作台」"
+    },
+    {
+      "id": "guard-harry-prince",
+      "stratum": "guard-homophone",
+      "input": "哈里王子",
+      "keep": true,
+      "why": "D7：2 字「哈里」不得因 哈里斯->Harness 而命中"
+    },
+    {
+      "id": "guard-jiushi",
+      "stratum": "guard-homophone",
+      "input": "就是这个问题",
+      "keep": true,
+      "why": "「就是」是正常副词，不是口水词"
+    },
+    {
+      "id": "guard-aishang",
+      "stratum": "guard-homophone",
+      "input": "唉声叹气",
+      "keep": true,
+      "why": "「唉」是词的一部分"
+    },
+    {
+      "id": "guard-kelaoade",
+      "stratum": "guard-homophone",
+      "input": "克㐂劳德",
+      "keep": true,
+      "why": "D6：表缺字（㐂）导致跨度坍缩，3 音节键不得命中 2 音节"
+    },
+    {
+      "id": "guard-haarisi",
+      "stratum": "guard-homophone",
+      "input": "哈㐂里斯",
+      "keep": true,
+      "why": "D6 同上"
+    },
+    {
+      "id": "guard-grade",
+      "stratum": "guard-realword",
+      "input": "my grade is A",
+      "keep": true,
+      "why": "D2：grade 是正常英文词"
+    },
+    {
+      "id": "guard-cloud",
+      "stratum": "guard-realword",
+      "input": "the cloud is down",
+      "keep": true,
+      "why": "D2：cloud 是正常英文词"
+    },
+    {
+      "id": "guard-harris-county",
+      "stratum": "guard-realword",
+      "input": "harris county",
+      "keep": true,
+      "why": "D2：harris 是正常英文词"
+    },
+    {
+      "id": "guard-upgrade",
+      "stratum": "guard-realword",
+      "input": "upgrade the build",
+      "keep": true,
+      "why": "D3：upgrade 含 grade，早期模糊匹配改坏"
+    },
+    {
+      "id": "guard-harmless",
+      "stratum": "guard-realword",
+      "input": "a harmless joke",
+      "keep": true,
+      "why": "D3：harmless 与 Harness 编辑距离 2"
+    },
+    {
+      "id": "guard-sadness",
+      "stratum": "guard-realword",
+      "input": "sadness",
+      "keep": true,
+      "why": "D3：60 个词典词命中 Harness 的典型"
+    },
+    {
+      "id": "guard-cocoa",
+      "stratum": "guard-realword",
+      "input": "cocoa",
+      "keep": true,
+      "why": "D3：曾被模糊匹配改成 Cocos Creator"
+    },
+    {
+      "id": "guard-hub",
+      "stratum": "guard-realword",
+      "input": "hub",
+      "keep": true,
+      "why": "D3：曾被模糊匹配改成 GitHub"
+    },
+    {
+      "id": "prot-harness-git",
+      "stratum": "guard-protected",
+      "input": "harness.git",
+      "keep": true,
+      "why": "D4：扩展名必须保护"
+    },
+    {
+      "id": "prot-cd-path",
+      "stratum": "guard-protected",
+      "input": "cd ~/projects/harness.git",
+      "keep": true,
+      "why": "D4：路径整段保护"
+    },
+    {
+      "id": "prot-grade-js",
+      "stratum": "guard-protected",
+      "input": "grade.js",
+      "keep": true,
+      "why": "D4：早期被改成 Gradle"
+    },
+    {
+      "id": "prot-url",
+      "stratum": "guard-protected",
+      "input": "https://github.com/y16689540962-cloud/dsh-voice-personal",
+      "keep": true,
+      "why": "URL 里的 github 不得被改写"
+    },
+    {
+      "id": "prot-email",
+      "stratum": "guard-protected",
+      "input": "user@example.com",
+      "keep": true,
+      "why": "邮箱保护"
+    },
+    {
+      "id": "prot-version",
+      "stratum": "guard-protected",
+      "input": "v1.2.3",
+      "keep": true,
+      "why": "版本号保护"
+    },
+    {
+      "id": "prot-flag",
+      "stratum": "guard-protected",
+      "input": "--fuzzy-terms",
+      "keep": true,
+      "why": "CLI 参数保护"
+    },
+    {
+      "id": "prot-inline-code",
+      "stratum": "guard-protected",
+      "input": "`github`",
+      "keep": true,
+      "why": "行内代码保护"
+    },
+    {
+      "id": "prot-loopback",
+      "stratum": "guard-protected",
+      "input": "127.0.0.1:19387",
+      "keep": true,
+      "why": "IP 被版本号规则覆盖，端口部分不动"
+    },
+    {
+      "id": "prot-cpp",
+      "stratum": "guard-protected",
+      "input": "C++",
+      "keep": true,
+      "why": "无术语，不得改动"
+    },
+    {
+      "id": "ws-python",
+      "stratum": "guard-whitespace",
+      "input": "def foo():\n    if x:\n        return 1",
+      "keep": true,
+      "why": "D8：Python 缩进逐字节保留"
+    },
+    {
+      "id": "ws-yaml",
+      "stratum": "guard-whitespace",
+      "input": "key:\n  value: 1\n  other: 2",
+      "keep": true,
+      "why": "D8：YAML 缩进逐字节保留"
+    },
+    {
+      "id": "ws-tab-indent",
+      "stratum": "guard-whitespace",
+      "input": "if x:\n\treturn 1",
+      "keep": true,
+      "why": "D8：Tab 缩进同样保留"
+    },
+    {
+      "id": "trad-taibei",
+      "stratum": "guard-whitespace",
+      "input": "工作臺的识别",
+      "keep": true,
+      "why": "D9：繁简不得被静默转换"
+    },
+    {
+      "id": "trad-compile",
+      "stratum": "guard-whitespace",
+      "input": "編譯通過了",
+      "keep": true,
+      "why": "D9"
+    },
+    {
+      "id": "trad-task",
+      "stratum": "guard-whitespace",
+      "input": "任務完成了",
+      "keep": true,
+      "why": "D9"
+    },
+    {
+      "id": "canon-cocos-triple",
+      "stratum": "guard-canonical",
+      "input": "Cocos Creator Creator",
+      "keep": true,
+      "why": "D5：规范形式不得二次展开"
+    },
+    {
+      "id": "canon-cocos",
+      "stratum": "guard-canonical",
+      "input": "Cocos Creator",
+      "keep": true,
+      "why": "D5：已规范，必须原样"
+    },
+    {
+      "id": "canon-github",
+      "stratum": "guard-canonical",
+      "input": "GitHub",
+      "keep": true,
+      "why": "D5"
+    },
+    {
+      "id": "canon-flclash",
+      "stratum": "guard-canonical",
+      "input": "FlClash",
+      "keep": true,
+      "why": "D5"
+    },
+    {
+      "id": "edge-empty",
+      "stratum": "edge",
+      "input": "",
+      "expect": "",
+      "why": "空串"
+    },
+    {
+      "id": "edge-spaces",
+      "stratum": "edge",
+      "input": "   ",
+      "expect": "",
+      "why": "纯空白被 tidy 清掉"
+    },
+    {
+      "id": "edge-emoji",
+      "stratum": "edge",
+      "input": "🙂",
+      "expect": "🙂",
+      "why": "emoji 不动"
+    },
+    {
+      "id": "edge-punct",
+      "stratum": "edge",
+      "input": "。",
+      "expect": "。",
+      "why": "单标点不动"
+    },
+    {
+      "id": "edge-inner-double-space",
+      "stratum": "edge",
+      "input": "a  b",
+      "expect": "a b",
+      "why": "行内连续空格折叠（行首空白不在此列，见 guard-whitespace）"
+    }
+  ]
+}

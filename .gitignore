@@ -6,6 +6,8 @@ node_modules/
 voiceprints.json
 style.json
 glossary.json
+# 评测结果与语料同批出现，里面可能含未脱敏的听写原文，只在本地留
+.eval/
 # 模型走 Git LFS 或发布页附件
 models/*.onnx
 

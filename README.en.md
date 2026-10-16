@@ -50,6 +50,28 @@ flcash → FlClash      workbody → WorkBuddy      哈里斯 → Harness
 gHub → GitHub         toptop → TapTap           deep seek → DeepSeek
 ```
 
+**Adding your own words needs no source edit and no restart.** Your terms live in `~/.dsh/voice-personal/terms.json`; the plugin checks its contents before each dictation, so a change takes effect the next time you speak:
+
+```bash
+cd ~/.dsh/profiles/desktop/node_modules/dsh-voice-personal   # where the plugin is installed
+node scripts/terms.mjs add FlClash --heard flcash   # add one
+node scripts/terms.mjs add PlantMerge               # casing only
+node scripts/terms.mjs list / check / candidates    # list, validate, see proposals
+```
+
+You can also edit that JSON by hand — either `{ "version": 1, "terms": ["DSH", { "say": "FlClash", "heard": ["flcash"] }] }` or a bare array.
+
+Entries are validated before they are written, and **one that would corrupt correct text is refused** with the reason:
+
+```
+$ node scripts/terms.mjs add Claude --heard cloud
+  ✗ "cloud" is listed as a mis-hearing of "Claude" but is the canonical spelling of
+    "Cloud" — that would rewrite every real occurrence of "Cloud".
+refused to write: 1 conflict.
+```
+
+> Why a data file instead of editing source? The plugin is installed with `pnpm file:`, which **hard-links** the source tree into the profile. Most editors save by writing a temp file and renaming, which breaks that link — so your edit lands in the source copy while DSH keeps loading the old one. The symptom is "I added my word and it still gets it wrong", with nothing to point at. That trap actually fired during this project's development.
+
 **Code-switch normalisation** — spacing between CJK and Latin follows the habit learned from your corpus (85–87% of writers of technical Chinese want a space there; the profile measures yours instead of guessing). Protected spans — URLs, file paths, emails, versions, CLI flags, inline code — are masked before any rewriting, so `harness.git` inside a path survives intact.
 
 **Filler removal, conservatively** — the profile learns which fillers actually occur in *your* speech (`呃 ×11, 然后 ×12, 那个 ×8` for the author) and deletes them only where they are safe: standalone, or followed by punctuation. A filler glued to a word (`唉声叹气`) is kept, because character-level context cannot tell a filler from a morpheme, and an adversarial pass proved the distinction matters. Deletion is whitelisted from the profile — text is never "cleaned" by a generic list.

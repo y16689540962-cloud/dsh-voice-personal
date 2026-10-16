@@ -23,7 +23,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createCorrector, DEFAULTS as CORRECT_DEFAULTS } from './lib/correct/index.js';
+import { createCorrector, DEFAULTS as CORRECT_DEFAULTS, TERMS as BUILTIN_TERMS, partitionTerms } from './lib/correct/index.js';
+import { createUserTermsLoader, mergeWithUserTerms, USER_TERMS_FILE } from './lib/correct/user-terms.js';
 import { applyStyle, learnStyle, STYLE_VERSION } from './lib/style/index.js';
 import { VoiceprintStore } from './lib/voiceprint/index.js';
 
@@ -56,11 +57,11 @@ const DEFAULTS = {
   providerName: '个人语音（本地增强）',
   baseProviderId: '',
   dataDir: '',
+  userTermsFile: '',
   speakerModelPath: '',
   voiceprintThreshold: 0.62,
   requireEnrolledSpeaker: false,
   crossScript: true,
-  fuzzyTerms: false,
   canonicalTerms: true,
   spacing: 'space',
   applyStyleProfile: true,
@@ -75,7 +76,34 @@ function readConfig(config, key, fallback) {
   if (!config) return fallback;
   const raw = config[key];
   const value = raw && typeof raw === 'object' && 'value' in raw ? raw.value : raw;
-  return value === undefined || value === null || value === '' ? fallback : value;
+  if (value === undefined || value === null || value === '') return fallback;
+
+  // Type-check against the default's own type. A config file is text a human edits, and the
+  // failure mode of getting it wrong is not a startup error but silently inverted behaviour:
+  // `requireEnrolledSpeaker: "False"` is a truthy string, so the speaker gate turns ON and
+  // every dictation is rejected; `spacing: "space "` (a stray space) matched neither branch
+  // and fell through to the "remove spaces" path. Both are silent and both are the user's
+  // fault only in the sense that they typed it — the plugin should have refused it.
+  const expect = typeof fallback;
+  if (expect === 'boolean' && typeof value !== 'boolean') {
+    throw new TypeError(`个人语音：配置项 ${key} 需要 true/false，收到 ${typeof value}（${JSON.stringify(value)}）`);
+  }
+  if (expect === 'string' && typeof value !== 'string') {
+    throw new TypeError(`个人语音：配置项 ${key} 需要字符串，收到 ${typeof value}（${JSON.stringify(value)}）`);
+  }
+  if (expect === 'number' && (typeof value !== 'number' || !Number.isFinite(value))) {
+    throw new TypeError(`个人语音：配置项 ${key} 需要数字，收到 ${JSON.stringify(value)}`);
+  }
+  return value;
+}
+
+/** Validate a config value against an explicit set. Returns the value, or throws. */
+function readEnum(config, key, fallback, allowed) {
+  const value = readConfig(config, key, fallback);
+  if (!allowed.includes(value)) {
+    throw new TypeError(`个人语音：配置项 ${key} 只能是 ${allowed.join(' / ')}，收到 ${JSON.stringify(value)}`);
+  }
+  return value;
 }
 
 /**
@@ -87,6 +115,7 @@ export function apply(ctx, config) {
   const logger = ctx.logger ?? console;
   const opts = {};
   for (const [k, v] of Object.entries(DEFAULTS)) opts[k] = readConfig(config, k, v);
+  opts.spacing = readEnum(config, 'spacing', DEFAULTS.spacing, ['space', 'none', 'preserve']);
 
   const modelPath = opts.speakerModelPath || path.join(HERE, 'models', 'campplus.onnx');
   // dataDir fallback chain, ordered by how the desktop app actually runs:
@@ -101,16 +130,60 @@ export function apply(ctx, config) {
     || (process.env.DSH_HOME ? path.join(process.env.DSH_HOME, 'voice-personal') : '')
     || path.join(os.homedir(), '.dsh', 'voice-personal');
 
-  const corrector = createCorrector({
-    options: {
-      ...CORRECT_DEFAULTS,
-      crossScript: opts.crossScript,
-      fuzzyTerms: opts.fuzzyTerms,
-      canonicalTerms: opts.canonicalTerms,
-      spacing: opts.spacing,
-    },
-    applyStyle: opts.applyStyleProfile ? applyStyle : null,
+  const correctorOptions = {
+    ...CORRECT_DEFAULTS,
+    crossScript: opts.crossScript,
+    canonicalTerms: opts.canonicalTerms,
+    spacing: opts.spacing,
+  };
+  const applyStyleFn = opts.applyStyleProfile ? applyStyle : null;
+
+  /**
+   * User terms live in a data file, not in the package, so adding a word survives upgrades
+   * and does not require editing source. See `lib/correct/user-terms.js` for why.
+   */
+  const userTerms = createUserTermsLoader({
+    dir: dataDir,
+    file: opts.userTermsFile || USER_TERMS_FILE,
+    logger,
   });
+
+  /**
+   * Build the corrector for the term list currently on disk, reusing it while nothing has
+   * changed. Indexing 26k pinyin entries per dictation would be wasteful; a `statSync` per
+   * dictation is not, and it is what makes "add a word, say it again" work without a
+   * restart.
+   */
+  let built = { key: null, corrector: null, termCount: 0 };
+  const correctorFor = (loaded) => {
+    if (built.key === loaded.key && built.corrector) return built.corrector;
+    let terms = BUILTIN_TERMS;
+    if (loaded.terms.length) {
+      const merged = mergeWithUserTerms(BUILTIN_TERMS, loaded.terms);
+      if (merged.shadowed.length) {
+        const detail = merged.shadowed.map((s) => `${s.say}（${s.forms.join('/')}）`).join('、');
+        logger.info?.(`[voice-personal] 你的词条重新分配了随插件附带的 ${merged.shadowed.length} 条误听形态：${detail}`);
+      }
+      // Safety net. `mergeWithUserTerms` should already produce a conflict-free list, but a
+      // future change to either side must not be able to reach a dictation unreviewed.
+      const checked = partitionTerms(merged.terms);
+      if (checked.issues.some((i) => i.severity === 'error')) {
+        logger.warn?.(
+          `[voice-personal] 词库仍有 ${checked.issues.filter((i) => i.severity === 'error').length} 处冲突，`
+          + `已跳过：${checked.dropped.join('；')}`,
+        );
+      }
+      terms = checked.terms;
+    }
+    const corrector = createCorrector({
+      terms,
+      pairs: loaded.pairs.length ? loaded.pairs : undefined,
+      options: correctorOptions,
+      applyStyle: applyStyleFn,
+    });
+    built = { key: loaded.key, corrector, termCount: terms.length };
+    return corrector;
+  };
 
   const voiceprint = new VoiceprintStore({
     dir: dataDir,
@@ -241,7 +314,7 @@ export function apply(ctx, config) {
         const inferenceSeconds = typeof result === 'object' ? result?.inferenceSeconds ?? 0 : 0;
 
         try {
-          const { text, changes } = corrector.correct(raw, { style: loadStyle() });
+          const { text, changes } = correctorFor(userTerms.load()).correct(raw, { style: loadStyle() });
           const out = { text, audioSeconds, inferenceSeconds };
           if (opts.audit) out.changes = changes;
           if (speaker?.matched) out.speaker = { name: speaker.name, score: speaker.score };
@@ -267,9 +340,17 @@ export function apply(ctx, config) {
   // Diagnostics only. Assigned to the module-level `internals` rather than to `ctx`:
   // Cordis rejects setting an undeclared property on the context
   // ("cannot set property ... without provide"), which crashed activation.
-  internals = { corrector, voiceprint, learnStyle, applyStyle, STYLE_VERSION, dataDir, modelPath };
-
-
-
-
+  internals = {
+    get corrector() { return built.corrector; },
+    built: () => ({ ...built }),
+    correctorFor,
+    userTerms,
+    correctorOptions,
+    voiceprint,
+    learnStyle,
+    applyStyle,
+    STYLE_VERSION,
+    dataDir,
+    modelPath,
+  };
 }

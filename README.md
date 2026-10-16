@@ -50,6 +50,28 @@ flcash → FlClash      workbody → WorkBuddy      哈里斯 → Harness
 gHub → GitHub         toptop → TapTap           deep seek → DeepSeek
 ```
 
+**加自己的词不用改源码，也不用重启。** 你的词条在 `~/.dsh/voice-personal/terms.json`，插件每次听写前检查一次文件内容，改了下次说话就生效：
+
+```bash
+cd ~/.dsh/profiles/desktop/node_modules/dsh-voice-personal   # 插件装在这里
+node scripts/terms.mjs add FlClash --heard flcash   # 加一条
+node scripts/terms.mjs add PlantMerge               # 只归一大小写
+node scripts/terms.mjs list / check / candidates    # 看、体检、看候选词
+```
+
+也可以直接手改那个 JSON 文件，格式是 `{ "version": 1, "terms": ["DSH", { "say": "FlClash", "heard": ["flcash"] }] }`，或者干脆写成一个数组。
+
+写进去之前会校验，**会改坏正确文本的条目被拒绝**并说明原因：
+
+```
+$ node scripts/terms.mjs add Claude --heard cloud
+  ✗ "cloud" is listed as a mis-hearing of "Claude" but is the canonical spelling of
+    "Cloud" — that would rewrite every real occurrence of "Cloud".
+拒绝写入：1 条冲突。
+```
+
+> 为什么是数据文件而不是改源码？插件通过 `pnpm file:` 安装，源码和安装副本之间是**硬链接**。多数编辑器保存时写临时文件再改名，会**断掉链接**——你改的是源码那份，DSH 加载的还是旧的。症状是「我明明加了词，它还是听错」，而且无从排查。这个坑在本项目里真实发生过一次。
+
 **中英混说规范化** —— 中英之间的空格跟随从你语料学到的习惯（技术中文写作者 85–87% 想要空格；画像测的是你的比例，不是猜的）。保护跨度——URL、文件路径、邮箱、版本号、CLI 参数、行内代码——在任何改写之前先被遮罩，所以路径里的 `harness.git` 完好无损。
 
 **口水词清理，保守路线** —— 画像从**你自己的**语料学出口水词（作者的实测：`呃 ×11, 然后 ×12, 那个 ×8`），只在安全位置删除：独立成词、或后接标点。粘着实词的语气词（`唉声叹气`）保留，因为字符级上下文分不清语气词和词素，对抗验证证明了这点很重要。删除走画像白名单——文本永远不会被「通用清单」乱清理。

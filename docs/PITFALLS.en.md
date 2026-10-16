@@ -39,6 +39,44 @@ const candidates = [
 Native binaries are in `app.asar.unpacked`, and Electron's fs patch redirects `*.node`
 loads there automatically — requiring from inside `app.asar` works from the Host process.
 
+## A `pnpm file:` install is **hard-linked** to your source tree
+
+**Editing the source does not update the installed copy, and nothing tells you.**
+
+`dsh plugin --profile desktop add file:./dsh-voice-personal` goes through pnpm's `file:`
+dependency, which **does not copy** — the source tree and
+`profiles/desktop/node_modules/dsh-voice-personal` share the same inodes.
+
+The moment an editor saves by writing a temp file and renaming (VS Code, vim's default
+`backupcopy=auto`, most GUI editors), that link breaks. Afterwards:
+
+- you edit the source → only the source changes
+- DSH loads the installed copy → behaviour is unchanged
+- the tests read the source → **the tests pass**
+- the symptom is "I changed it and it still does the old thing", with no error pointing here
+
+This actually happened in this project: the engine went from v2 to v3, three recognition gaps
+were fixed, every test passed — and the installed copy was still v2. None of the three fixes
+were live for the user.
+
+**How to tell whether the link still holds:**
+
+```bash
+LIVE=~/path/to/dsh-voice-personal
+INST=~/.dsh/profiles/desktop/node_modules/dsh-voice-personal
+stat -f %i "$LIVE/lib/correct/index.js" "$INST/lib/correct/index.js"   # different inodes = broken
+grep -o 'CORRECT_VERSION = [0-9]*' "$INST/lib/correct/index.js"        # the version actually loaded
+```
+
+**What to do:** do not rely on the hard link. Put anything the user is meant to change in the
+**data directory** — this plugin's glossary is `<dataDir>/terms.json`, effective on the next
+dictation with no restart. For source changes, sync explicitly and **print the version inside
+the installed copy** so a human can check it (`dev/sync-install.sh`).
+
+Worth noting: a broken link is actually the safer steady state — the installed copy becomes a
+snapshot that source edits cannot silently alter. The requirement is an explicit sync step,
+rather than assuming that editing means it took effect.
+
 ## Paths
 
 **`new URL(import.meta.url).pathname` keeps percent-encoding.**

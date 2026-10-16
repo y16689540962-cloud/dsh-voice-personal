@@ -32,6 +32,34 @@ const candidates = [
 
 原生二进制在 `app.asar.unpacked`，Electron 的 fs 补丁会自动把 `*.node` 的加载重定向过去——Host 进程里从 `app.asar` 内部 require 是可以的。
 
+## `pnpm file:` 装出来的副本和源码是**硬链接**
+
+**编辑源码不会更新已安装的副本，而且不会报错。**
+
+`dsh plugin --profile desktop add file:./dsh-voice-personal` 走 pnpm 的 `file:` 依赖，它**不拷贝**——源码树和 `profiles/desktop/node_modules/dsh-voice-personal` 下的文件共用同一个 inode。
+
+只要编辑器保存时是「写临时文件再 rename」（VS Code、vim 的 `backupcopy=auto`、多数 GUI 编辑器都这样），链接就断了。之后：
+
+- 你改源码 → 只有源码变
+- DSH 加载的是安装副本 → 行为不变
+- 测试读源码 → **测试通过**
+- 症状是「我明明改了，它还是老样子」，没有任何报错指向这里
+
+本项目真实发生过：引擎从 v2 升到 v3、修掉三个识别缺口、全部测试通过之后，安装副本仍是 v2——用户实际听写时那三个 bug 一个都没修好。
+
+**判断链接还在不在：**
+
+```bash
+LIVE=~/path/to/dsh-voice-personal
+INST=~/.dsh/profiles/desktop/node_modules/dsh-voice-personal
+stat -f %i "$LIVE/lib/correct/index.js" "$INST/lib/correct/index.js"   # inode 不同 = 链接已断
+grep -o 'CORRECT_VERSION = [0-9]*' "$INST/lib/correct/index.js"        # 安装副本里的真实版本
+```
+
+**怎么处理：** 不要依赖硬链接。把用户会改的东西放进**数据目录**（本插件的词库就是 `<dataDir>/terms.json`，改完下次听写生效，不需要重启）；源码改动则显式同步，并**打印安装副本里的实际版本**让人核对（`dev/sync-install.sh`）。
+
+顺带一提：链接断掉之后反而是更安全的默认——安装副本成了快照，不会被源码编辑意外改动。前提是你有一个显式的同步步骤，而不是默认「改了就该生效」。
+
 ## 路径
 
 **`new URL(import.meta.url).pathname` keeps percent-encoding.**
