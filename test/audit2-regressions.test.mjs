@@ -108,6 +108,23 @@ test('A3: a path immediately after a Chinese character is protected', () => {
   }
 });
 
+test('A3b: an @-prefixed path is protected, but an @mention is not a path', () => {
+  // Found while mining the session corpus: `@path` is how files are referenced in this
+  // harness, and `@` was absent from the delimiter class. `@/Users/me/flcash/log.txt` came
+  // back with its directory renamed to `FlClash`.
+  const c = dict([{ say: 'FlClash', heard: ['flcash'] }, { say: 'DSH' }]);
+  for (const s of [
+    '@/Users/me/flcash/log.txt',
+    '@/Users/me/flcash/heic.heic',
+    '见@/tmp/flcash 目录',
+    '@~/flcash/x',
+  ]) {
+    assert.equal(c.correct(s).text, s, s);
+  }
+  // A bare `@token` is a mention, not a path, and must still be corrected.
+  assert.equal(c.correct('发到@flcash 上').text, '发到@FlClash 上');
+});
+
 // ── A4: identifiers and ordinary words ─────────────────────────────────────────────
 
 test('A4: underscore-joined identifiers are never rewritten', () => {
